@@ -1,12 +1,14 @@
 package com.pagamento.application.dto;
 
 import com.pagamento.domain.model.enums.MetodoPagamento;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 
+@Schema(description = "DTO para criação de um novo pagamento")
 public class CriarPagamentoDTO {
 
     @NotNull(message = "Código do débito é obrigatório")

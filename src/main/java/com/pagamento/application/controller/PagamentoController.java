@@ -6,6 +6,7 @@ import com.pagamento.application.dto.PagamentoDTO;
 import com.pagamento.domain.model.Pagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;
 import com.pagamento.domain.service.PagamentoService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pagamentos")
+@Tag(name = "Pagamentos", description = "API para gestão de pagamentos de débitos")
 public class PagamentoController {
 
     private final PagamentoService pagamentoService;
