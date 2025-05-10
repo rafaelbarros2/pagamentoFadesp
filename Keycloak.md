@@ -1,27 +1,19 @@
-# Guia de Segurança com Keycloak
+# Segurança com Keycloak
 
-Este documento explica detalhadamente como a segurança é implementada na API de Pagamentos usando Keycloak, e como configurar e utilizar autenticação e autorização corretamente.
+Este documento explica os aspectos de segurança da API de Pagamentos com Keycloak, focando na autenticação, autorização e gerenciamento de tokens.
 
 ## 📋 Índice
 
-- [Visão Geral da Segurança](#-visão-geral-da-segurança)
-- [Configuração do Keycloak](#-configuração-do-keycloak)
-- [Gerando e Usando Tokens](#-gerando-e-usando-tokens)
+- [Fluxo de Autenticação](#-fluxo-de-autenticação)
+- [Obtendo e Utilizando Tokens](#-obtendo-e-utilizando-tokens)
+- [Estrutura dos Tokens JWT](#-estrutura-dos-tokens-jwt)
 - [Segurança nos Endpoints](#-segurança-nos-endpoints)
 - [Troubleshooting](#-troubleshooting)
-- [Configuração para Produção](#-configuração-para-produção)
+- [Melhores Práticas](#-melhores-práticas)
 
-## 🔒 Visão Geral da Segurança
+## 🔄 Fluxo de Autenticação
 
-A API de Pagamentos usa Keycloak como provedor OAuth 2.0/OpenID Connect para autenticação e autorização. Este modelo de segurança oferece várias vantagens:
-
-- **Autenticação robusta**: Suporte a diversos métodos de autenticação
-- **Autorização baseada em papéis (RBAC)**: Controle granular de acesso
-- **Tokens JWT**: Autenticação stateless e eficiente
-- **Padrões de indústria**: Baseado em padrões de segurança amplamente adotados
-- **Federação de identidade**: Possibilidade de integração com LDAP, Active Directory, etc.
-
-### Fluxo de Autenticação e Autorização
+A API de Pagamentos utiliza o fluxo OAuth 2.0 com OpenID Connect para autenticação:
 
 ```
 ┌─────────┐                                  ┌────────────┐                             ┌─────────────┐
@@ -45,66 +37,23 @@ A API de Pagamentos usa Keycloak como provedor OAuth 2.0/OpenID Connect para aut
      │                                             │                                            │
 ```
 
-## 🛠 Configuração do Keycloak
+### Fluxos Suportados
 
-### Pré-requisitos
+1. **Resource Owner Password Credentials Grant** (usado nos exemplos)
+   - O cliente envia usuário/senha diretamente ao servidor de autenticação
+   - Útil para aplicações confiáveis ou testes
 
-- Docker e Docker Compose instalados
-- Java 17 ou superior para a API
+2. **Authorization Code Flow**
+   - Mais seguro para aplicações web
+   - O usuário é redirecionado para o Keycloak para autenticação
 
-### Iniciando o Keycloak
+3. **Client Credentials Grant**
+   - Para comunicação sistema-a-sistema
+   - Usa o segredo do cliente para autenticação
 
-1. **Crie a estrutura de diretórios**:
-   ```
-   seu-projeto/
-   ├── docker-compose.yml
-   └── keycloak/
-       └── imports/
-           └── pagamentos-realm.json
-   ```
+## 🔑 Obtendo e Utilizando Tokens
 
-2. **Execute o Keycloak**:
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Verifique se o Keycloak está rodando**:
-   ```bash
-   docker ps
-   ```
-   Você deve ver um contêiner chamado `keycloak` rodando na porta 8180.
-
-4. **Acesse o Console Admin do Keycloak**:
-    - URL: http://localhost:8180
-    - Usuário: admin
-    - Senha: admin
-
-### Estrutura do Realm Pré-configurado
-
-O arquivo `pagamentos-realm.json` contém a seguinte configuração:
-
-1. **Realm**: `pagamentos-realm`
-
-2. **Clientes**:
-    - `pagamentos-api`:
-        - Tipo: confidential (com secret)
-        - Secret: YQwLiTeFMJEqY9JZx6W8RJ0tQlSAhiYQ
-        - Redirects: http://localhost:8080/*
-        - Direct Access Grants: Habilitado (para fluxo de password grant)
-
-3. **Papéis do Realm**:
-    - `pagamento_admin`: Papel principal para gerenciar pagamentos
-
-4. **Usuários**:
-    - `usuario1`:
-        - Senha: password
-        - Papel atribuído: pagamento_admin
-
-## 🔑 Gerando e Usando Tokens
-
-### Obtendo um Token de Acesso
-
-Usando curl:
+### Obtendo um Token com Username/Password
 
 ```bash
 curl -X POST http://localhost:8180/auth/realms/pagamentos-realm/protocol/openid-connect/token \
@@ -116,19 +65,7 @@ curl -X POST http://localhost:8180/auth/realms/pagamentos-realm/protocol/openid-
   --data-urlencode 'password=password'
 ```
 
-Usando Postman:
-1. Selecione método POST
-2. URL: http://localhost:8180/auth/realms/pagamentos-realm/protocol/openid-connect/token
-3. Na aba "Body", selecione "x-www-form-urlencoded"
-4. Adicione os campos:
-    - grant_type: password
-    - client_id: pagamentos-api
-    - client_secret: YQwLiTeFMJEqY9JZx6W8RJ0tQlSAhiYQ
-    - username: usuario1
-    - password: password
-5. Clique em "Send"
-
-### Estrutura da Resposta
+### Resposta do Token
 
 ```json
 {
@@ -152,11 +89,9 @@ curl -X GET http://localhost:8080/api/pagamentos \
   --header 'Authorization: Bearer SEU_ACCESS_TOKEN_AQUI'
 ```
 
-O token tem validade de 5 minutos por padrão. Após esse período, você precisará:
-- Obter um novo token com o endpoint /token
-- Ou usar o refresh_token para obter um novo access_token
+### Renovando o Token
 
-### Renovando o Token com Refresh Token
+Quando o access_token expirar (padrão: 5 minutos), use o refresh_token para obter um novo:
 
 ```bash
 curl -X POST http://localhost:8180/auth/realms/pagamentos-realm/protocol/openid-connect/token \
@@ -167,46 +102,133 @@ curl -X POST http://localhost:8180/auth/realms/pagamentos-realm/protocol/openid-
   --data-urlencode 'refresh_token=SEU_REFRESH_TOKEN_AQUI'
 ```
 
+## 🔍 Estrutura dos Tokens JWT
+
+Os tokens JWT (JSON Web Tokens) emitidos pelo Keycloak contêm informações importantes:
+
+### Header
+```json
+{
+  "alg": "RS256",
+  "typ": "JWT",
+  "kid": "..."
+}
+```
+
+### Payload
+```json
+{
+  "exp": 1634567890,
+  "iat": 1634567590,
+  "jti": "...",
+  "iss": "http://localhost:8180/auth/realms/pagamentos-realm",
+  "sub": "1234567890",
+  "typ": "Bearer",
+  "azp": "pagamentos-api",
+  "session_state": "...",
+  "acr": "1",
+  "realm_access": {
+    "roles": [
+      "pagamento_admin"
+    ]
+  },
+  "resource_access": {
+    "pagamentos-api": {
+      "roles": [
+        "pagamento_admin"
+      ]
+    }
+  },
+  "scope": "email profile",
+  "email_verified": true,
+  "name": "Usuário Administrador",
+  "preferred_username": "usuario1",
+  "given_name": "Usuário",
+  "family_name": "Administrador",
+  "email": "usuario@pagamentos.com"
+}
+```
+
+### Entendendo as Claims
+
+- **exp**: Data de expiração do token
+- **iss**: Emissor do token (endereço do Keycloak)
+- **sub**: Subject (ID do usuário)
+- **realm_access.roles**: Papéis do usuário no realm
+- **resource_access.{client}.roles**: Papéis do usuário específicos do cliente
+- **preferred_username**: Nome de usuário
+
+### Verificando Tokens
+
+Para inspecionar o conteúdo de um token JWT:
+1. Acesse https://jwt.io
+2. Cole o token no campo "Encoded"
+3. O conteúdo decodificado será exibido
+
 ## 🔐 Segurança nos Endpoints
 
-A API implementa dois níveis de segurança:
+### Implementação na API
 
-1. **Segurança Global**: Todos os endpoints da API exigem autenticação, exceto:
-    - `/api-docs/**` (Documentação OpenAPI)
-    - `/swagger-ui/**` (Interface Swagger)
-    - `/h2-console/**` (Console H2 para desenvolvimento)
+A API utiliza Spring Security com adaptadores para Keycloak:
 
-2. **Segurança por Método**: Anotações `@PreAuthorize` são usadas para controle granular de acesso:
-    - Todos os endpoints requerem o papel `pagamento_admin`
+```java
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class SecurityConfig {
+    // Configuração básica de segurança
+}
+```
 
-### Códigos de Resposta Relacionados à Segurança
+### Proteção Global
 
-| Código | Descrição |
-|--------|-----------|
-| 401 | Não autenticado (token ausente ou inválido) |
-| 403 | Não autorizado (autenticado, mas sem permissão) |
+Todos os endpoints da API exigem autenticação, exceto:
+- `/api-docs/**` (Documentação OpenAPI)
+- `/swagger-ui/**` (Interface Swagger)
+- `/h2-console/**` (Console H2 para desenvolvimento)
 
-## 🔍 Troubleshooting
+### Proteção por Método
 
-### Problemas Comuns e Soluções
+Controle de acesso granular usando anotações `@PreAuthorize`:
 
-1. **Erro "401 Unauthorized"**:
-    - Verifique se o token foi incluído no cabeçalho Authorization
-    - Verifique se o token não expirou (tokens duram 5 minutos por padrão)
-    - Verifique se o token está no formato correto: `Bearer seu_token_aqui`
+```java
+@PreAuthorize("hasRole('pagamento_admin')")
+public ResponseEntity<PagamentoDTO> criarPagamento(...) { ... }
 
-2. **Erro "403 Forbidden"**:
-    - Verifique se o usuário tem o papel `pagamento_admin`
-    - Verifique no Console do Keycloak se os papéis estão atribuídos corretamente
+@PreAuthorize("hasAnyRole('pagamento_admin', 'pagamento_consulta')")
+public ResponseEntity<List<PagamentoDTO>> listarTodos() { ... }
+```
 
-3. **Não consigo obter um token**:
-    - Verifique se o Keycloak está rodando: `docker ps`
-    - Verifique se as credenciais (usuário/senha) estão corretas
-    - Verifique se o client_id e client_secret estão corretos
+### Códigos de Resposta HTTP
 
-4. **Verificar o conteúdo de um token JWT**:
-    - Acesse https://jwt.io
-    - Cole seu token para decodificar e verificar as claims, incluindo papéis (roles)
+| Código | Descrição | Causa |
+|--------|-----------|-------|
+| 401 Unauthorized | Não autenticado | Token ausente, inválido ou expirado |
+| 403 Forbidden | Não autorizado | Token válido, mas sem permissão para o recurso |
+
+## 🔧 Troubleshooting
+
+### Problemas Comuns
+
+1. **Token Inválido (401 Unauthorized)**
+   - **Problema**: Token ausente, mal formatado ou expirado
+   - **Verificação**: Inspecione o token em jwt.io para ver a data de expiração
+   - **Solução**: Obtenha um novo token ou verifique o formato do cabeçalho
+
+2. **Permissões Insuficientes (403 Forbidden)**
+   - **Problema**: Usuário não tem os papéis necessários
+   - **Verificação**: Verifique o campo "realm_access.roles" no token
+   - **Solução**: Use um usuário com os papéis adequados
+
+3. **Erro ao Obter Token**
+   - **Problema**: Credenciais incorretas ou cliente inválido
+   - **Verificação**: Verifique usuário, senha, client_id e client_secret
+   - **Solução**: Corrija as credenciais ou verifique se o Keycloak está rodando
+
+4. **Token Não Renovável**
+   - **Problema**: refresh_token expirado ou inválido
+   - **Verificação**: Verifique se está usando o refresh_token correto e recente
+   - **Solução**: Obtenha um novo par de tokens com autenticação completa
 
 ### Logs para Debug
 
@@ -217,40 +239,34 @@ logging.level.org.springframework.security=DEBUG
 logging.level.org.keycloak=DEBUG
 ```
 
-## 🚀 Configuração para Produção
+## 📝 Melhores Práticas
 
-Para ambientes de produção, considere os seguintes ajustes:
+### 1. Gerenciamento de Tokens
 
-1. **SSL/TLS**: Configure HTTPS tanto para o Keycloak quanto para a API
-   ```properties
-   # No application.properties
-   keycloak.ssl-required=all
-   server.ssl.enabled=true
-   # ... outras configurações SSL
-   ```
+- **Armazenamento**: Nunca armazene tokens em localStorage em aplicações web (vulnerável a XSS)
+- **Preferência**: Use cookies HttpOnly para aplicações web
+- **Renovação**: Implemente renovação automática de tokens antes da expiração
+- **Logout**: Revogue tokens ao fazer logout
 
-2. **Segredos**: Use variáveis de ambiente ou ferramentas como Vault para gerenciar segredos
-   ```properties
-   keycloak.credentials.secret=${KEYCLOAK_CLIENT_SECRET}
-   ```
+### 2. Segurança em Produção
 
-3. **Tempos de Expiração**: Ajuste os tempos de expiração dos tokens conforme necessidade
-    - No Console do Keycloak: Realm Settings > Tokens
+- **HTTPS**: Sempre use SSL/TLS em produção
+- **Expiração**: Ajuste os tempos de expiração conforme necessidade
+   - Access Token: 5-15 minutos
+   - Refresh Token: 1-24 horas
+- **Secrets**: Use variáveis de ambiente ou cofres de segredos
+- **2FA**: Considere ativar autenticação de dois fatores
 
-4. **Outras Melhorias de Segurança**:
-    - Habilite autenticação de dois fatores (2FA)
-    - Configure políticas de senha mais fortes
-    - Implemente limitação de taxa (rate limiting)
-    - Configure auditoria de eventos de segurança
+### 3. Auditoria e Monitoramento
 
----
+- Ative o log de eventos no Keycloak
+- Monitore falhas de autenticação
+- Implemente alertas para tentativas suspeitas de acesso
 
 ## 📚 Recursos Adicionais
 
 - [Documentação Oficial do Keycloak](https://www.keycloak.org/documentation)
 - [Guia do Spring Security OAuth2](https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html)
-- [Padrões de Segurança OWASP](https://owasp.org/www-project-top-ten/)
-
----
-
-*Para qualquer dúvida adicional sobre a implementação de segurança, entre em contato com a equipe de desenvolvimento.*
+- [JWT.io](https://jwt.io/) - Ferramenta para decodificar e verificar JWTs
+- [OAuth 2.0](https://oauth.net/2/) - Especificação OAuth 2.0
+- [OpenID Connect](https://openid.net/connect/) - Especificação OpenID Connect
