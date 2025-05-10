@@ -1,4 +1,4 @@
-package com.pagamento.domain.service;
+package com.pagamento.domain.port.service;
 
 import com.pagamento.domain.exception.PagamentoNaoEncontradoException;
 import com.pagamento.domain.exception.StatusInvalidoException;
@@ -6,11 +6,14 @@ import com.pagamento.domain.exception.StatusInvalidoException;
 import com.pagamento.domain.model.Pagamento;
 import com.pagamento.domain.model.enums.MetodoPagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;
-import com.pagamento.domain.repository.PagamentoRepository;
+import com.pagamento.domain.port.repository.PagamentoRepository;
+import lombok.Setter;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Service
 public class PagamentoService {
 
     private final PagamentoRepository pagamentoRepository;
@@ -19,7 +22,6 @@ public class PagamentoService {
         this.pagamentoRepository = pagamentoRepository;
     }
 
-    // Criar um novo pagamento
     public Pagamento criarPagamento(Integer codigoDebito, String cpfCnpj,
                                     MetodoPagamento metodoPagamento,
                                     String numeroCartao, BigDecimal valor) {
@@ -44,7 +46,6 @@ public class PagamentoService {
             throw new IllegalArgumentException("Valor deve ser maior que zero");
         }
 
-        // Criar pagamento com base no método
         Pagamento pagamento;
         if (metodoPagamento == MetodoPagamento.CARTAO_CREDITO ||
                 metodoPagamento == MetodoPagamento.CARTAO_DEBITO) {
@@ -56,7 +57,6 @@ public class PagamentoService {
         return pagamentoRepository.salvar(pagamento);
     }
 
-    // Atualizar status do pagamento
     public Pagamento atualizarStatusPagamento(Long id, StatusPagamento novoStatus) {
         Pagamento pagamento = pagamentoRepository.buscarPorId(id)
                 .orElseThrow(() -> new PagamentoNaoEncontradoException("Pagamento não encontrado com ID: " + id));
@@ -70,7 +70,6 @@ public class PagamentoService {
         return pagamentoRepository.salvar(pagamento);
     }
 
-    // Realizar exclusão lógica
     public Pagamento inativarPagamento(Long id) {
         Pagamento pagamento = pagamentoRepository.buscarPorId(id)
                 .orElseThrow(() -> new PagamentoNaoEncontradoException("Pagamento não encontrado com ID: " + id));
@@ -84,7 +83,6 @@ public class PagamentoService {
         return pagamentoRepository.salvar(pagamento);
     }
 
-    // Métodos de busca
     public List<Pagamento> buscarTodos() {
         return pagamentoRepository.buscarTodos();
     }

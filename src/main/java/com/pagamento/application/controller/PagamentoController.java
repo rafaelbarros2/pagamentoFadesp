@@ -5,7 +5,7 @@ import com.pagamento.application.dto.CriarPagamentoDTO;
 import com.pagamento.application.dto.PagamentoDTO;
 import com.pagamento.domain.model.Pagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;
-import com.pagamento.domain.service.PagamentoService;
+import com.pagamento.domain.port.service.PagamentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

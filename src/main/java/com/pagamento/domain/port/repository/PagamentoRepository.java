@@ -1,4 +1,4 @@
-package com.pagamento.domain.repository;
+package com.pagamento.domain.port.repository;
 
 import com.pagamento.domain.model.Pagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;

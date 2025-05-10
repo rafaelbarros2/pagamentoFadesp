@@ -6,11 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.pagamento.application.dto.AtualizarStatusDTO;
 import com.pagamento.application.dto.CriarPagamentoDTO;
-import com.pagamento.config.TestConfig;
+import com.pagamento.infrastructure.config.TestConfig;
 import com.pagamento.domain.model.enums.MetodoPagamento;
 import com.pagamento.domain.model.Pagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;
-import com.pagamento.domain.service.PagamentoService;
+import com.pagamento.domain.port.service.PagamentoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -35,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(PagamentoController.class)
 @ActiveProfiles("test")
+@Import(TestConfig.class)
 class PagamentoControllerTest {
 
     @Autowired
@@ -53,6 +55,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve criar pagamento com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveCriarPagamentoComSucesso() throws Exception {
         // Arrange
         CriarPagamentoDTO dto = new CriarPagamentoDTO();
@@ -98,6 +101,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve atualizar status do pagamento com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveAtualizarStatusDoPagamentoComSucesso() throws Exception {
         // Arrange
         Long id = 1L;
@@ -121,6 +125,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve inativar pagamento com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveInativarPagamentoComSucesso() throws Exception {
         // Arrange
         Long id = 1L;
@@ -140,6 +145,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve listar todos os pagamentos com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveListarTodosPagamentosComSucesso() throws Exception {
         // Arrange
         Pagamento pagamento1 = new Pagamento(123, "12345678901", MetodoPagamento.PIX, BigDecimal.valueOf(100.0));
@@ -160,6 +166,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve retornar lista vazia quando não há pagamentos")
+    @WithMockUser(roles = "pagamento_admin")
     void deveRetornarListaVaziaQuandoNaoHaPagamentos() throws Exception {
         // Arrange
         when(pagamentoService.buscarTodos()).thenReturn(Collections.emptyList());
@@ -174,6 +181,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve buscar pagamento por ID com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveBuscarPagamentoPorIdComSucesso() throws Exception {
         // Arrange
         Long id = 1L;
@@ -192,6 +200,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve filtrar pagamentos por código de débito com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveFiltrarPagamentosPorCodigoDebitoComSucesso() throws Exception {
         // Arrange
         Integer codigoDebito = 123;
@@ -212,6 +221,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve filtrar pagamentos por CPF/CNPJ com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveFiltrarPagamentosPorCpfCnpjComSucesso() throws Exception {
         // Arrange
         String cpfCnpj = "12345678901";
@@ -232,6 +242,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve filtrar pagamentos por status com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveFiltrarPagamentosPorStatusComSucesso() throws Exception {
         // Arrange
         StatusPagamento status = StatusPagamento.PROCESSADO_SUCESSO;

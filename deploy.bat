@@ -19,28 +19,19 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-REM Verificar se o Maven está instalado (necessário apenas se for compilar)
+REM Verificar se o Maven está instalado
 WHERE mvn >nul 2>nul
 IF %ERRORLEVEL% NEQ 0 (
-    echo AVISO: Maven não está instalado. Pulando etapa de compilação.
-    SET MVN_INSTALLED=false
-) ELSE (
-    SET MVN_INSTALLED=true
+    echo ERRO: Maven não está instalado. Maven é necessário para compilar o projeto.
+    exit /b 1
 )
 
-REM Verificar se o JAR já existe
-IF NOT EXIST "target\pagamento-api-0.0.1-SNAPSHOT.jar" (
-    IF "%MVN_INSTALLED%"=="true" (
-        echo Compilando o projeto...
-        mvn clean package -DskipTests
-        IF %ERRORLEVEL% NEQ 0 (
-            echo ERRO: Falha na compilação do projeto.
-            exit /b 1
-        )
-    ) ELSE (
-        echo ERRO: O arquivo JAR não existe e o Maven não está instalado para compilá-lo.
-        exit /b 1
-    )
+REM Sempre compilar o projeto usando mvn clean install
+echo Compilando o projeto com Maven...
+mvn clean install
+IF %ERRORLEVEL% NEQ 0 (
+    echo ERRO: Falha na compilação do projeto.
+    exit /b 1
 )
 
 REM Criar a estrutura de diretórios para o Keycloak
@@ -67,6 +58,9 @@ IF NOT EXIST "Dockerfile" (
 )
 
 REM Iniciar os serviços com Docker Compose
+echo Parando serviços existentes...
+docker-compose down
+
 echo Iniciando serviços com Docker Compose...
 docker-compose up -d --build
 

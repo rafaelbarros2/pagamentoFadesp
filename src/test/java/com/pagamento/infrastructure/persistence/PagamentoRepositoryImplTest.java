@@ -3,6 +3,7 @@ package com.pagamento.infrastructure.persistence;
 import com.pagamento.domain.model.enums.MetodoPagamento;
 import com.pagamento.domain.model.Pagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;
+import com.pagamento.infrastructure.adapter.persistence.PagamentoRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

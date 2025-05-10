@@ -1,4 +1,4 @@
-package com.pagamento.infrastructure.persistence;
+package com.pagamento.infrastructure.adapter.persistence;
 
 import com.pagamento.domain.model.Pagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;

@@ -1,9 +1,9 @@
-package com.pagamento.infrastructure.persistence;
+package com.pagamento.infrastructure.adapter.persistence;
 
 import com.pagamento.domain.model.Pagamento;
 
 import com.pagamento.domain.model.enums.StatusPagamento;
-import com.pagamento.domain.repository.PagamentoRepository;
+import com.pagamento.domain.port.repository.PagamentoRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

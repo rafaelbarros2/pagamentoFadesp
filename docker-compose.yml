@@ -15,6 +15,7 @@ services:
     command:
       - start-dev
       - --import-realm
+      - "--http-relative-path=/auth"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/auth"]
       interval: 10s
@@ -27,7 +28,7 @@ services:
     container_name: pagamentos-api
     build:
       context: .
-      dockerfile: Dockerfile-app
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     environment:

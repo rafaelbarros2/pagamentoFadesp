@@ -8,16 +8,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -25,22 +19,20 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, TokenValidationFilter tokenValidationFilter) throws Exception {
         http
                 .csrf().disable()
                 .cors().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests(authorizeRequests -> authorizeRequests
-                        // Endpoints públicos (sem autenticação)
-                        .antMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/h2-console/**").permitAll()
-                        // Endpoints protegidos por papel
+                        .antMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/h2-console/**", "/auth/login").permitAll()
                         .antMatchers("/api/pagamentos/**").hasRole("pagamento_admin")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .addFilterBefore(tokenValidationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // Para permitir acesso ao console H2 (apenas para ambiente de desenvolvimento)
         http.headers().frameOptions().sameOrigin();
 
         return http.build();
@@ -53,24 +45,3 @@ public class SecurityConfig {
     }
 }
 
-/**
- * Conversor para extrair os papéis (roles) do token JWT do Keycloak
- */
-class KeycloakRealmRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public Collection<GrantedAuthority> convert(Jwt jwt) {
-        final Map<String, Object> realmAccess = (Map<String, Object>) jwt.getClaims().get("realm_access");
-
-        if (realmAccess == null || realmAccess.isEmpty()) {
-            return List.of();
-        }
-
-        return ((List<String>) realmAccess.get("roles"))
-                .stream()
-                .map(roleName -> "ROLE_" + roleName)
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-    }
-}

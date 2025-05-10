@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.pagamento.application.dto.AtualizarStatusDTO;
 import com.pagamento.application.dto.CriarPagamentoDTO;
-import com.pagamento.config.TestConfig;
+import com.pagamento.infrastructure.config.TestConfig;
 import com.pagamento.domain.model.enums.MetodoPagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +19,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
 import java.math.BigDecimal;
+import java.util.Base64;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -37,9 +39,29 @@ class PagamentoApiIntegrationTest {
 
     private ObjectMapper objectMapper;
 
+    /**
+     * Gera um token JWT válido para testes onde a verificação da assinatura
+     * esteja configurada para o ambiente de teste.
+     * @return O header de autorização com um token JWT
+     */
     private String getAuthorizationHeader() {
-        return "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsicGFnYW1lbnRvX2FkbWluIl19fQ.signature";
+        // Codificar o cabeçalho: {"alg":"HS256","typ":"JWT"}
+        String header = Base64.getUrlEncoder().encodeToString(
+                "{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes());
+
+        // Codificar o payload com uma expiração válida (1 hora no futuro)
+        long expTime = System.currentTimeMillis() + 3600000;
+        String payload = Base64.getUrlEncoder().encodeToString(
+                ("{\"sub\":\"usuario1\",\"exp\":" + expTime/1000 +
+                        ",\"realm_access\":{\"roles\":[\"pagamento_admin\"]}}").getBytes());
+
+        // Gerar uma assinatura para testes
+        String signature = Base64.getUrlEncoder().encodeToString(
+                "test-signature-for-integration-tests".getBytes());
+
+        return "Bearer " + header + "." + payload + "." + signature;
     }
+
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
@@ -58,7 +80,7 @@ class PagamentoApiIntegrationTest {
         criarDTO.setValor(BigDecimal.valueOf(100.0));
 
         MvcResult resultCriar = mockMvc.perform(post("/api/pagamentos")
-                        .header("Authorization", getAuthorizationHeader())
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(criarDTO)))
                 .andExpect(status().isCreated())
@@ -78,6 +100,7 @@ class PagamentoApiIntegrationTest {
         atualizarDTO.setStatus(StatusPagamento.PROCESSADO_SUCESSO);
 
         mockMvc.perform(put("/api/pagamentos/{id}/status", pagamentoId)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(atualizarDTO)))
                 .andExpect(status().isOk())
@@ -89,12 +112,14 @@ class PagamentoApiIntegrationTest {
         atualizarFalhaDTO.setStatus(StatusPagamento.PROCESSADO_FALHA);
 
         mockMvc.perform(put("/api/pagamentos/{id}/status", pagamentoId)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(atualizarFalhaDTO)))
                 .andExpect(status().isBadRequest());
 
         // 4. Tentar inativar pagamento já processado (deve falhar)
-        mockMvc.perform(delete("/api/pagamentos/{id}", pagamentoId))
+        mockMvc.perform(delete("/api/pagamentos/{id}", pagamentoId)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest());
 
         // 5. Verificar que o pagamento ainda está com status PROCESSADO_SUCESSO
@@ -116,6 +141,7 @@ class PagamentoApiIntegrationTest {
         criarDTO.setValor(BigDecimal.valueOf(200.0));
 
         MvcResult resultCriar = mockMvc.perform(post("/api/pagamentos")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(criarDTO)))
                 .andExpect(status().isCreated())
@@ -130,13 +156,15 @@ class PagamentoApiIntegrationTest {
         falhaDTO.setStatus(StatusPagamento.PROCESSADO_FALHA);
 
         mockMvc.perform(put("/api/pagamentos/{id}/status", pagamentoId)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(falhaDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status", is(StatusPagamento.PROCESSADO_FALHA.toString())));
 
         // 3. Tentar inativar pagamento com falha (deve falhar)
-        mockMvc.perform(delete("/api/pagamentos/{id}", pagamentoId))
+        mockMvc.perform(delete("/api/pagamentos/{id}", pagamentoId)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest());
 
         // 4. Atualizar status para PENDENTE_PROCESSAMENTO
@@ -144,13 +172,15 @@ class PagamentoApiIntegrationTest {
         pendenteDTO.setStatus(StatusPagamento.PENDENTE_PROCESSAMENTO);
 
         mockMvc.perform(put("/api/pagamentos/{id}/status", pagamentoId)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pendenteDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status", is(StatusPagamento.PENDENTE_PROCESSAMENTO.toString())));
 
         // 5. Inativar pagamento agora pendente (deve funcionar)
-        mockMvc.perform(delete("/api/pagamentos/{id}", pagamentoId))
+        mockMvc.perform(delete("/api/pagamentos/{id}", pagamentoId)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ativo", is(false)));
 
@@ -174,6 +204,7 @@ class PagamentoApiIntegrationTest {
         dto1.setValor(BigDecimal.valueOf(150.0));
 
         mockMvc.perform(post("/api/pagamentos")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto1)))
                 .andExpect(status().isCreated());
@@ -186,6 +217,7 @@ class PagamentoApiIntegrationTest {
         dto2.setValor(BigDecimal.valueOf(250.0));
 
         mockMvc.perform(post("/api/pagamentos")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto2)))
                 .andExpect(status().isCreated());
@@ -199,6 +231,7 @@ class PagamentoApiIntegrationTest {
         dto3.setValor(BigDecimal.valueOf(350.0));
 
         MvcResult result3 = mockMvc.perform(post("/api/pagamentos")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto3)))
                 .andExpect(status().isCreated())
@@ -213,6 +246,7 @@ class PagamentoApiIntegrationTest {
         statusDTO.setStatus(StatusPagamento.PROCESSADO_SUCESSO);
 
         mockMvc.perform(put("/api/pagamentos/{id}/status", pagamento3Id)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusDTO)))
                 .andExpect(status().isOk());
@@ -256,6 +290,7 @@ class PagamentoApiIntegrationTest {
         dto1.setValor(BigDecimal.valueOf(150.0));
 
         mockMvc.perform(post("/api/pagamentos")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto1)))
                 .andExpect(status().isBadRequest());
@@ -267,6 +302,7 @@ class PagamentoApiIntegrationTest {
         dto2.setValor(BigDecimal.valueOf(150.0));
 
         mockMvc.perform(post("/api/pagamentos")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto2)))
                 .andExpect(status().isBadRequest());
@@ -279,6 +315,7 @@ class PagamentoApiIntegrationTest {
         dto3.setValor(BigDecimal.valueOf(150.0));
 
         mockMvc.perform(post("/api/pagamentos")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto3)))
                 .andExpect(status().isBadRequest());
