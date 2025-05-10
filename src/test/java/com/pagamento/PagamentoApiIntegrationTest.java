@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.pagamento.application.dto.AtualizarStatusDTO;
 import com.pagamento.application.dto.CriarPagamentoDTO;
+import com.pagamento.config.TestConfig;
 import com.pagamento.domain.model.enums.MetodoPagamento;
 import com.pagamento.domain.model.enums.StatusPagamento;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -26,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(TestConfig.class)
 class PagamentoApiIntegrationTest {
 
     @Autowired
@@ -33,6 +37,9 @@ class PagamentoApiIntegrationTest {
 
     private ObjectMapper objectMapper;
 
+    private String getAuthorizationHeader() {
+        return "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsicGFnYW1lbnRvX2FkbWluIl19fQ.signature";
+    }
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
@@ -40,9 +47,10 @@ class PagamentoApiIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "pagamento_admin")
     @DisplayName("Deve criar, atualizar e inativar pagamento com sucesso")
     void deveCriarAtualizarInativarPagamentoComSucesso() throws Exception {
-        // 1. Criar pagamento
+
         CriarPagamentoDTO criarDTO = new CriarPagamentoDTO();
         criarDTO.setCodigoDebito(123);
         criarDTO.setCpfCnpj("12345678901");
@@ -50,6 +58,7 @@ class PagamentoApiIntegrationTest {
         criarDTO.setValor(BigDecimal.valueOf(100.0));
 
         MvcResult resultCriar = mockMvc.perform(post("/api/pagamentos")
+                        .header("Authorization", getAuthorizationHeader())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(criarDTO)))
                 .andExpect(status().isCreated())
@@ -97,6 +106,7 @@ class PagamentoApiIntegrationTest {
 
     @Test
     @DisplayName("Deve criar, falhar, atualizar para pendente e inativar pagamento com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveCriarFalharAtualizarParaPendenteEInativarPagamentoComSucesso() throws Exception {
         // 1. Criar pagamento
         CriarPagamentoDTO criarDTO = new CriarPagamentoDTO();
@@ -152,6 +162,7 @@ class PagamentoApiIntegrationTest {
 
     @Test
     @DisplayName("Deve filtrar pagamentos por critérios com sucesso")
+    @WithMockUser(roles = "pagamento_admin")
     void deveFiltrarPagamentosPorCriteriosComSucesso() throws Exception {
         // 1. Criar vários pagamentos para teste
 
@@ -236,6 +247,7 @@ class PagamentoApiIntegrationTest {
 
     @Test
     @DisplayName("Deve validar campos obrigatórios ao criar pagamento")
+    @WithMockUser(roles = "pagamento_admin")
     void deveValidarCamposObrigatoriosAoCriarPagamento() throws Exception {
         // Pagamento sem código de débito
         CriarPagamentoDTO dto1 = new CriarPagamentoDTO();
