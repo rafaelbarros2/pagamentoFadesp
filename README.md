@@ -329,7 +329,7 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICE
 
 ## ✍️ Autor
 
-*Seu Nome* - [github.com/yourusername](https://github.com/rafaelbarros2)
+*Rafael Barros* - [github.com/rafaelbarros2](https://github.com/rafaelbarros2)
 
 ---
 
