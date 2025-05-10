@@ -6,7 +6,7 @@ Este projeto implementa uma API de pagamentos utilizando Domain-Driven Design (D
 
 - [Arquitetura](#-arquitetura)
 - [Tecnologias](#-tecnologias)
-- [Configuração e Execução](#-configuração-e-execução)
+- [Deploy com Docker Compose](#-configuração-e-execução)
 - [Segurança com Keycloak](#-segurança-com-keycloak)
 - [Endpoints da API](#-endpoints-da-api)
 - [Exemplos de Uso](#-exemplos-de-uso)
@@ -59,30 +59,110 @@ O projeto é estruturado seguindo os princípios do Domain-Driven Design (DDD), 
 
 ### Passos para Execução
 
-1. **Clone o repositório**:
+🐳 Deploy com Docker Compose
+Para implantar a API e o Keycloak usando Docker Compose, siga os passos abaixo:
+Pré-requisitos
+
+Docker instalado (versão 20.10 ou superior)
+Docker Compose instalado (versão 2.0 ou superior)
+Git (opcional, para clonar o repositório)
+
+Arquivos Necessários
+Certifique-se de ter os seguintes arquivos na raiz do seu projeto:
+1. **docker-compose.yml**
+2. **Dockerfile**
+3. **keycloak/imports/pagamentos-realm.json**
+
+Para implantar a API e o Keycloak usando Docker Compose, você pode utilizar os scripts de automação fornecidos ou seguir os passos manuais.
+
+### Scripts de Automação
+
+Para simplificar o processo de deploy, disponibilizamos scripts para ambientes Linux/macOS e Windows:
+
+#### Para Linux/macOS:
+
+1. **Torne o script executável**:
    ```bash
-   git clone https://github.com/yourusername/pagamento-api.git
-   cd pagamento-api
+   chmod +x deploy.sh
    ```
 
-2. **Inicie o Keycloak**:
+2. **Execute o script**:
    ```bash
-   docker-compose up -d
+   ./deploy.sh
    ```
 
-3. **Compile e execute a aplicação**:
-   ```bash
-   mvn clean install
-   mvn spring-boot:run
+#### Para Windows:
+
+1. **Execute o script**:
+   ```
+   deploy.bat
    ```
 
-4. **Acesse a aplicação**:
-    - API: http://localhost:8080/api/pagamentos
-    - Documentação Swagger: http://localhost:8080/swagger-ui.html
-    - Console H2: http://localhost:8080/h2-console
-        - JDBC URL: jdbc:h2:mem:pagamentodb
-        - Usuário: sa
-        - Senha: (vazio)
+Estes scripts automatizam todo o processo de:
+- Verificar pré-requisitos (Docker, Docker Compose)
+- Compilar o projeto (se Maven estiver disponível)
+- Criar a estrutura de diretórios necessária
+- Verificar se todos os arquivos necessários estão presentes
+- Iniciar os serviços com Docker Compose
+- Verificar o status dos serviços
+
+### Deploy Manual
+
+1. **Compile a aplicação** (se ainda não tiver o JAR pronto):
+   ```bash
+   mvn clean package -DskipTests
+   ```
+
+2. **Crie a estrutura de diretórios para o Keycloak**:
+   ```bash
+   mkdir -p keycloak/imports/
+   ```
+
+3. **Salve o arquivo pagamentos-realm.json** na pasta `keycloak/imports/`
+
+4. **Inicie os serviços com Docker Compose**:
+   ```bash
+   docker-compose up --build
+   ```
+
+   Ou para executar em segundo plano:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+5. **Verifique se os serviços estão rodando**:
+   ```bash
+   docker-compose ps
+   ```
+
+6. **Acesse os serviços**:
+    - API: http://localhost:8080
+    - Swagger UI: http://localhost:8080/swagger-ui.html
+    - Keycloak: http://localhost:8180
+
+### Comandos Úteis
+
+- **Parar os serviços**:
+  ```bash
+  docker-compose down
+  ```
+
+- **Ver logs dos serviços**:
+  ```bash
+  docker-compose logs
+  ```
+
+  Ou para um serviço específico:
+  ```bash
+  docker-compose logs keycloak
+  docker-compose logs pagamentos-api
+  ```
+
+- **Reiniciar os serviços**:
+  ```bash
+  docker-compose restart
+  ```
+
 
 ## 🔐 Segurança com Keycloak
 
@@ -257,3 +337,5 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICE
 ---
 
 *Desenvolvido como parte de um desafio técnico para demonstrar habilidades em Spring Boot, arquitetura DDD e segurança com OAuth 2.0*
+
+*Para mais informações sobre segurança e autenticação, consulte o arquivo KEYCLOAK.md*
