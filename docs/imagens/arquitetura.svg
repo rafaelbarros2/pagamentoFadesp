@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+    <!-- Fundo e título -->
+    <rect x="0" y="0" width="800" height="600" fill="#f8f9fa" />
+    <text x="400" y="40" font-family="Arial" font-size="24" text-anchor="middle" font-weight="bold">Arquitetura DDD - API de Pagamentos</text>
+
+    <!-- Camada de Aplicação -->
+    <rect x="100" y="80" width="600" height="120" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="2" />
+    <text x="400" y="110" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold" fill="#1565c0">Application Layer</text>
+
+    <rect x="130" y="130" width="160" height="50" rx="5" fill="#bbdefb" stroke="#1565c0" stroke-width="1" />
+    <text x="210" y="160" font-family="Arial" font-size="14" text-anchor="middle">Controllers</text>
+
+    <rect x="320" y="130" width="160" height="50" rx="5" fill="#bbdefb" stroke="#1565c0" stroke-width="1" />
+    <text x="400" y="160" font-family="Arial" font-size="14" text-anchor="middle">DTOs</text>
+
+    <rect x="510" y="130" width="160" height="50" rx="5" fill="#bbdefb" stroke="#1565c0" stroke-width="1" />
+    <text x="590" y="160" font-family="Arial" font-size="14" text-anchor="middle">Exception Handlers</text>
+
+    <!-- Camada de Domínio -->
+    <rect x="100" y="220" width="600" height="180" rx="10" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2" />
+    <text x="400" y="250" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold" fill="#2e7d32">Domain Layer</text>
+
+    <rect x="130" y="280" width="160" height="50" rx="5" fill="#c8e6c9" stroke="#2e7d32" stroke-width="1" />
+    <text x="210" y="310" font-family="Arial" font-size="14" text-anchor="middle">Entities</text>
+
+    <rect x="130" y="340" width="160" height="50" rx="5" fill="#c8e6c9" stroke="#2e7d32" stroke-width="1" />
+    <text x="210" y="370" font-family="Arial" font-size="14" text-anchor="middle">Enums</text>
+
+    <rect x="320" y="280" width="160" height="50" rx="5" fill="#c8e6c9" stroke="#2e7d32" stroke-width="1" />
+    <text x="400" y="310" font-family="Arial" font-size="14" text-anchor="middle">Repository Interfaces</text>
+
+    <rect x="320" y="340" width="160" height="50" rx="5" fill="#c8e6c9" stroke="#2e7d32" stroke-width="1" />
+    <text x="400" y="370" font-family="Arial" font-size="14" text-anchor="middle">Exceptions</text>
+
+    <rect x="510" y="280" width="160" height="110" rx="5" fill="#c8e6c9" stroke="#2e7d32" stroke-width="1" />
+    <text x="590" y="310" font-family="Arial" font-size="14" text-anchor="middle">Domain Services</text>
+    <text x="590" y="330" font-family="Arial" font-size="12" text-anchor="middle">Regras de Negócio</text>
+    <text x="590" y="350" font-family="Arial" font-size="12" text-anchor="middle">Validações</text>
+    <text x="590" y="370" font-family="Arial" font-size="12" text-anchor="middle">Lógica de Domínio</text>
+
+    <!-- Camada de Infraestrutura -->
+    <rect x="100" y="420" width="600" height="120" rx="10" fill="#fff3e0" stroke="#e65100" stroke-width="2" />
+    <text x="400" y="450" font-family="Arial" font-size="18" text-anchor="middle" font-weight="bold" fill="#e65100">Infrastructure Layer</text>
+
+    <rect x="130" y="480" width="160" height="50" rx="5" fill="#ffe0b2" stroke="#e65100" stroke-width="1" />
+    <text x="210" y="510" font-family="Arial" font-size="14" text-anchor="middle">Repository Impl</text>
+
+    <rect x="320" y="480" width="160" height="50" rx="5" fill="#ffe0b2" stroke="#e65100" stroke-width="1" />
+    <text x="400" y="510" font-family="Arial" font-size="14" text-anchor="middle">Configuration</text>
+
+    <rect x="510" y="480" width="160" height="50" rx="5" fill="#ffe0b2" stroke="#e65100" stroke-width="1" />
+    <text x="590" y="510" font-family="Arial" font-size="14" text-anchor="middle">Security</text>
+
+    <!-- Setas de relação -->
+    <!-- Application -> Domain -->
+    <path d="M400 200 L400 220" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+
+    <!-- Domain -> Infrastructure -->
+    <path d="M400 400 L400 420" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+
+    <!-- Definição de marcadores para as setas -->
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+        </marker>
+    </defs>
+
+    <!-- Elementos Externos -->
+    <rect x="50" y="560" width="100" height="30" rx="5" fill="#e1bee7" stroke="#6a1b9a" stroke-width="1" />
+    <text x="100" y="580" font-family="Arial" font-size="14" text-anchor="middle">H2 Database</text>
+
+    <rect x="170" y="560" width="100" height="30" rx="5" fill="#e1bee7" stroke="#6a1b9a" stroke-width="1" />
+    <text x="220" y="580" font-family="Arial" font-size="14" text-anchor="middle">Spring Boot</text>
+
+    <rect x="290" y="560" width="100" height="30" rx="5" fill="#e1bee7" stroke="#6a1b9a" stroke-width="1" />
+    <text x="340" y="580" font-family="Arial" font-size="14" text-anchor="middle">Swagger</text>
+
+    <rect x="410" y="560" width="100" height="30" rx="5" fill="#e1bee7" stroke="#6a1b9a" stroke-width="1" />
+    <text x="460" y="580" font-family="Arial" font-size="14" text-anchor="middle">Keycloak</text>
+
+    <rect x="530" y="560" width="100" height="30" rx="5" fill="#e1bee7" stroke="#6a1b9a" stroke-width="1" />
+    <text x="580" y="580" font-family="Arial" font-size="14" text-anchor="middle">OAuth/JWT</text>
+
+    <rect x="650" y="560" width="100" height="30" rx="5" fill="#e1bee7" stroke="#6a1b9a" stroke-width="1" />
+    <text x="700" y="580" font-family="Arial" font-size="14" text-anchor="middle">Docker</text>
+</svg>
