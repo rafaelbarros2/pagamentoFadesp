@@ -35,8 +35,7 @@ O projeto é estruturado seguindo os princípios do Domain-Driven Design (DDD), 
     - DTOs para transferência de dados
     - Handler de exceções
 
-![Arquitetura DDD](https://raw.githubusercontent.com/yourusername/pagamento-api/main/docs/ddd-architecture.png)
-
+![Arquitetura-DDD](docs/images/ddd-architecture.svg)
 ## 🛠 Tecnologias
 
 - **Java 17**: Linguagem de programação principal
